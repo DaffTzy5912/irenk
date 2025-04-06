@@ -14,10 +14,10 @@
       align-items: center;
       justify-content: center;
       height: 100vh;
-      transition: background-color 0.5s ease;
+      background-color: #f4f4f4;
     }
     h1 {
-      color: white;
+      color: black;
       text-align: center;
     }
     .color-options {
@@ -31,39 +31,8 @@
       cursor: pointer;
       font-size: 16px;
     }
-    #brown { background-color: brown; }
-    #white { background-color: white; color: black; }
-    #black { background-color: black; }
-    #prompt-container {
+    #image-upload {
       margin-top: 20px;
-      text-align: center;
-    }
-    #prompt-input {
-      padding: 10px;
-      width: 300px;
-      font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    #generate-button {
-      margin-top: 10px;
-      padding: 10px 20px;
-      background-color: #007BFF;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 16px;
-    }
-    #output {
-      margin-top: 20px;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      width: 300px;
-      text-align: center;
-      background-color: rgba(255, 255, 255, 0.8);
-      color: black;
     }
     #image-preview {
       margin-top: 20px;
@@ -72,25 +41,15 @@
       border: 1px solid #ccc;
       border-radius: 5px;
     }
-    #image-upload {
-      margin-top: 20px;
-    }
   </style>
 </head>
-<body id="body">
+<body>
   <h1>Website Penghitam</h1>
   <div class="color-options">
-    <button id="brown" onclick="changeColor('brown')">Coklat</button>
-    <button id="white" onclick="changeColor('white')">Putih</button>
-    <button id="black" onclick="changeColor('black')">Hitam</button>
+    <button id="brown" onclick="setColor('brown')">Coklat</button>
+    <button id="white" onclick="setColor('white')">Putih</button>
+    <button id="black" onclick="setColor('black')">Hitam</button>
   </div>
-  <div id="prompt-container">
-    <input type="text" id="prompt-input" placeholder="Masukkan prompt (opsional)">
-    <button id="generate-button" onclick="generateContent()">Generate</button>
-  </div>
-  <div id="output">Output akan muncul di sini.</div>
-
-  <!-- Upload Gambar -->
   <div id="image-upload">
     <h3>Upload Gambar</h3>
     <input type="file" id="image-input" accept="image/*">
@@ -99,50 +58,12 @@
   </div>
 
   <script>
-    // Function to change background color
-    function changeColor(color) {
-      const body = document.getElementById("body");
-      if (color === "brown") {
-        body.style.backgroundColor = "brown";
-        body.style.color = "white";
-      } else if (color === "white") {
-        body.style.backgroundColor = "white";
-        body.style.color = "black";
-      } else if (color === "black") {
-        body.style.backgroundColor = "black";
-        body.style.color = "white";
-      }
-    }
+    let selectedColor = null;
 
-    // Function to call the backend API
-    async function generateContent() {
-      const promptInput = document.getElementById("prompt-input").value;
-      const outputDiv = document.getElementById("output");
-
-      try {
-        // Show loading state
-        outputDiv.textContent = "Menghasilkan konten...";
-
-        // Call the backend API
-        const response = await fetch("/generate", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ prompt: promptInput || "Tulis sesuatu yang menarik." }),
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          outputDiv.textContent = data.output;
-        } else {
-          outputDiv.textContent = data.error || "Gagal menghasilkan konten.";
-        }
-      } catch (error) {
-        console.error("Error generating content:", error);
-        outputDiv.textContent = "Gagal menghasilkan konten. Silakan coba lagi.";
-      }
+    // Function to set selected color
+    function setColor(color) {
+      selectedColor = color;
+      alert(`Warna dipilih: ${color}`);
     }
 
     // Handle image upload and preview
@@ -163,6 +84,11 @@
 
     // Apply effect to the image
     async function applyEffect() {
+      if (!selectedColor) {
+        alert("Silakan pilih warna terlebih dahulu.");
+        return;
+      }
+
       const file = imageInput.files[0];
       if (!file) {
         alert("Silakan upload gambar terlebih dahulu.");
@@ -171,6 +97,7 @@
 
       const formData = new FormData();
       formData.append("image", file);
+      formData.append("color", selectedColor);
 
       try {
         const response = await fetch("/apply-effect", {
