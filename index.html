@@ -65,6 +65,16 @@
       background-color: rgba(255, 255, 255, 0.8);
       color: black;
     }
+    #image-preview {
+      margin-top: 20px;
+      max-width: 300px;
+      max-height: 300px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    #image-upload {
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body id="body">
@@ -79,6 +89,14 @@
     <button id="generate-button" onclick="generateContent()">Generate</button>
   </div>
   <div id="output">Output akan muncul di sini.</div>
+
+  <!-- Upload Gambar -->
+  <div id="image-upload">
+    <h3>Upload Gambar</h3>
+    <input type="file" id="image-input" accept="image/*">
+    <button id="apply-effect" onclick="applyEffect()">Terapkan Efek</button>
+    <img id="image-preview" src="" alt="Preview" style="display: none;">
+  </div>
 
   <script>
     // Function to change background color
@@ -124,6 +142,52 @@
       } catch (error) {
         console.error("Error generating content:", error);
         outputDiv.textContent = "Gagal menghasilkan konten. Silakan coba lagi.";
+      }
+    }
+
+    // Handle image upload and preview
+    const imageInput = document.getElementById("image-input");
+    const imagePreview = document.getElementById("image-preview");
+
+    imageInput.addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          imagePreview.src = e.target.result;
+          imagePreview.style.display = "block";
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Apply effect to the image
+    async function applyEffect() {
+      const file = imageInput.files[0];
+      if (!file) {
+        alert("Silakan upload gambar terlebih dahulu.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("image", file);
+
+      try {
+        const response = await fetch("/apply-effect", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          imagePreview.src = url;
+        } else {
+          alert("Gagal menerapkan efek.");
+        }
+      } catch (error) {
+        console.error("Error applying effect:", error);
+        alert("Gagal menerapkan efek. Silakan coba lagi.");
       }
     }
   </script>
