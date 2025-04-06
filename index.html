@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Website Penghitam</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      transition: background-color 0.5s ease;
+    }
+    h1 {
+      color: white;
+      text-align: center;
+    }
+    .color-options {
+      margin-top: 20px;
+    }
+    .color-options button {
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    #brown { background-color: brown; }
+    #white { background-color: white; color: black; }
+    #black { background-color: black; }
+    #prompt-container {
+      margin-top: 20px;
+      text-align: center;
+    }
+    #prompt-input {
+      padding: 10px;
+      width: 300px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    #generate-button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    #output {
+      margin-top: 20px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      width: 300px;
+      text-align: center;
+      background-color: rgba(255, 255, 255, 0.8);
+      color: black;
+    }
+  </style>
+</head>
+<body id="body">
+  <h1>Website Penghitam</h1>
+  <div class="color-options">
+    <button id="brown" onclick="changeColor('brown')">Coklat</button>
+    <button id="white" onclick="changeColor('white')">Putih</button>
+    <button id="black" onclick="changeColor('black')">Hitam</button>
+  </div>
+  <div id="prompt-container">
+    <input type="text" id="prompt-input" placeholder="Masukkan prompt (opsional)">
+    <button id="generate-button" onclick="generateContent()">Generate</button>
+  </div>
+  <div id="output">Output akan muncul di sini.</div>
+
+  <script>
+    // Function to change background color
+    function changeColor(color) {
+      const body = document.getElementById("body");
+      if (color === "brown") {
+        body.style.backgroundColor = "brown";
+        body.style.color = "white";
+      } else if (color === "white") {
+        body.style.backgroundColor = "white";
+        body.style.color = "black";
+      } else if (color === "black") {
+        body.style.backgroundColor = "black";
+        body.style.color = "white";
+      }
+    }
+
+    // Function to call the backend API
+    async function generateContent() {
+      const promptInput = document.getElementById("prompt-input").value;
+      const outputDiv = document.getElementById("output");
+
+      try {
+        // Show loading state
+        outputDiv.textContent = "Menghasilkan konten...";
+
+        // Call the backend API
+        const response = await fetch("/generate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ prompt: promptInput || "Tulis sesuatu yang menarik." }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          outputDiv.textContent = data.output;
+        } else {
+          outputDiv.textContent = data.error || "Gagal menghasilkan konten.";
+        }
+      } catch (error) {
+        console.error("Error generating content:", error);
+        outputDiv.textContent = "Gagal menghasilkan konten. Silakan coba lagi.";
+      }
+    }
+  </script>
+</body>
+</html>
