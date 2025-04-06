@@ -12,6 +12,10 @@
       "dest": "/generate"
     },
     {
+      "src": "/apply-effect",
+      "dest": "/apply-effect"
+    },
+    {
       "src": "/(.*)",
       "dest": "/"
     }
