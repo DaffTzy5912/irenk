@@ -1,7 +1,7 @@
 import express from "express";
 import multer from "multer";
 import Jimp from "jimp";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import * as faceapi from "face-api.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,41 +12,53 @@ app.use(express.json());
 // Multer untuk menangani file upload
 const upload = multer({ dest: "uploads/" });
 
-// Google Generative AI setup
-const API_KEY = process.env.GOOGLE_API_KEY; // Ambil dari environment variable
-const genAI = new GoogleGenerativeAI(API_KEY);
-
-// Endpoint untuk memanggil Google Generative AI
-app.post("/generate", async (req, res) => {
-  const { prompt } = req.body;
-
-  if (!prompt) {
-    return res.status(400).json({ error: "Prompt is required" });
-  }
-
-  try {
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-
-    res.json({ output: text });
-  } catch (error) {
-    console.error("Error generating content:", error);
-    res.status(500).json({ error: "Failed to generate content" });
-  }
-});
+// Load model deteksi wajah
+(async () => {
+  await faceapi.nets.tinyFaceDetector.loadFromDisk("./public/models");
+})();
 
 // Endpoint untuk menerapkan efek pada gambar
 app.post("/apply-effect", upload.single("image"), async (req, res) => {
-  try {
-    const imagePath = req.file.path;
+  const { color } = req.body;
+  const imagePath = req.file.path;
 
+  try {
     // Baca gambar menggunakan Jimp
     const image = await Jimp.read(imagePath);
 
-    // Ubah gambar menjadi hitam-putih
-    image.grayscale();
+    // Deteksi wajah menggunakan face-api.js
+    const imgBuffer = await Jimp.read(imagePath).then((img) => img.getBufferAsync(Jimp.MIME_JPEG));
+    const detectedFaces = await faceapi
+      .detectAllFaces(await faceapi.fetchImage(imgBuffer), new faceapi.TinyFaceDetectorOptions());
+
+    // Iterasi setiap wajah yang terdeteksi
+    for (const face of detectedFaces) {
+      const { x, y, width, height } = face.box;
+
+      // Ubah warna wajah berdasarkan pilihan pengguna
+      for (let i = x; i < x + width; i++) {
+        for (let j = y; j < y + height; j++) {
+          const pixelColor = Jimp.intToRGBA(image.getPixelColor(i, j));
+
+          if (color === "brown") {
+            pixelColor.r = 139; // Merah
+            pixelColor.g = 69;  // Hijau
+            pixelColor.b = 19;  // Biru
+          } else if (color === "white") {
+            pixelColor.r = 255;
+            pixelColor.g = 255;
+            pixelColor.b = 255;
+          } else if (color === "black") {
+            pixelColor.r = 0;
+            pixelColor.g = 0;
+            pixelColor.b = 0;
+          }
+
+          const newColor = Jimp.rgbaToInt(pixelColor.r, pixelColor.g, pixelColor.b, pixelColor.a);
+          image.setPixelColor(newColor, i, j);
+        }
+      }
+    }
 
     // Kirim gambar yang sudah diproses sebagai respons
     res.set("Content-Type", "image/jpeg");
@@ -68,5 +80,5 @@ app.use(express.static("public"));
 
 // Start the server
 app.listen(PORT, () => {
-  console.log(`Server running on http://irenk.vervel.app/:${PORT}`);
+  console.log(`Server running on http://irenk.vercel.app/:${PORT}`);
 });
